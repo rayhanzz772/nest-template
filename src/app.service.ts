@@ -1,8 +1,23 @@
-import { Injectable } from '@nestjs/common';
+
+import { Inject, Injectable } from '@nestjs/common';
+import { sql } from 'drizzle-orm';
+import { DRIZZLE } from './db/db.module.js';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+  constructor(
+    @Inject(DRIZZLE)
+    private readonly db: any,
+  ) { }
+
+  async getHealth() {
+    const result = await this.db.execute(
+      sql`SELECT current_database() AS database, NOW() AS time`,
+    );
+
+    return {
+      message: 'Database connected successfully',
+      result: result.rows,
+    };
   }
 }
