@@ -12,6 +12,12 @@ export class CreateUserDto {
   email!: string;
 
   @IsString()
-  @IsOptional()
-  bio?: string;
+  @IsNotEmpty()
+  @MaxLength(255)
+  password!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  roleId!: string;
 }

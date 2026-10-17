@@ -3,13 +3,13 @@ import * as argon2 from 'argon2';
 
 @Injectable()
 export class PasswordService {
-  async hash(password: string): Promise<string> {
+  static async hash(password: string): Promise<string> {
     return argon2.hash(password, {
       type: argon2.argon2id,
     });
   }
 
-  async verify(
+  static async verify(
     hash: string,
     password: string,
   ): Promise<boolean> {
@@ -18,5 +18,16 @@ export class PasswordService {
     } catch {
       return false;
     }
+  }
+
+  async hash(password: string): Promise<string> {
+    return PasswordService.hash(password);
+  }
+
+  async verify(
+    hash: string,
+    password: string,
+  ): Promise<boolean> {
+    return PasswordService.verify(hash, password);
   }
 }

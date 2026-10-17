@@ -1,7 +1,8 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { DRIZZLE } from '../../database/database.module.js';
-import { users } from '../../database/schema.js';
+import { users } from '../../database/schema/user.schema.js';
+import { roles } from '../../database/schema/role.schema.js';
 import type { Database } from '../../database/database.types.js';
 import { count, eq } from 'drizzle-orm';
 import { CreateUserDto } from './dto/create-user.dto.js';
@@ -21,7 +22,21 @@ export class UsersService {
     const { page, limit, offset } = query;
 
     const [data, totalResult] = await Promise.all([
-      this.db.select().from(users).limit(limit).offset(offset),
+      this.db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
+        role: {
+          id: roles.id,
+          name: roles.name,
+          code: roles.code,
+        },
+      })
+      .from(users)
+      .leftJoin(roles, eq(users.roleId, roles.id))
+      .limit(limit)
+      .offset(offset),
       this.db.select({ count: count() }).from(users),
     ]);
 
@@ -32,7 +47,20 @@ export class UsersService {
   }
 
   async findById(id: string) {
-    const result = await this.db.select().from(users).where(eq(users.id, id));
+    const result = await this.db.select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      createdAt: users.createdAt,
+      role: {
+        id: roles.id,
+        name: roles.name,
+        code: roles.code,
+      },
+    })
+    .from(users)
+    .leftJoin(roles, eq(users.roleId, roles.id))
+    .where(eq(users.id, id));
     return result[0];
   }
 
