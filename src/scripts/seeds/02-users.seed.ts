@@ -1,13 +1,13 @@
 import type { Database } from '../../database/database.types.js';
 import * as schema from '../../database/schema/user.schema.js';
-import { PasswordService } from '../../security/password.service.js';
+import { PasswordService } from '../../security/password.service.js'
 import { roles } from '../../database/schema/role.schema.js';
 import { eq } from 'drizzle-orm';
 
 export async function seedUsers(db: Database): Promise<void> {
   console.log('  ⏳ Menanam data users...');
 
-  const password = await PasswordService.hash('password123');
+  const password = await new PasswordService().hash('password123');
 
   const userRole = (await db.select({ id: roles.id }).from(roles).where(eq(roles.code, 'USER')).limit(1))[0];
   const adminRole = (await db.select({ id: roles.id }).from(roles).where(eq(roles.code, 'ADMIN')).limit(1))[0];

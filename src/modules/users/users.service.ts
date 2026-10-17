@@ -10,9 +10,10 @@ import { UpdateUserDto } from './dto/update-user.dto.js';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
 import { createPaginationMeta } from '../../common/utils/pagination.util.js';
 import { apiResponse } from '../../common/dto/api-response.dto.js';
+import type { IUsersService } from './users.service.interface.js';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements IUsersService {
   constructor(
     @Inject(DRIZZLE)
     private readonly db: Database,
@@ -33,10 +34,10 @@ export class UsersService {
           code: roles.code,
         },
       })
-      .from(users)
-      .leftJoin(roles, eq(users.roleId, roles.id))
-      .limit(limit)
-      .offset(offset),
+        .from(users)
+        .leftJoin(roles, eq(users.roleId, roles.id))
+        .limit(limit)
+        .offset(offset),
       this.db.select({ count: count() }).from(users),
     ]);
 
@@ -58,9 +59,9 @@ export class UsersService {
         code: roles.code,
       },
     })
-    .from(users)
-    .leftJoin(roles, eq(users.roleId, roles.id))
-    .where(eq(users.id, id));
+      .from(users)
+      .leftJoin(roles, eq(users.roleId, roles.id))
+      .where(eq(users.id, id));
     return result[0];
   }
 
