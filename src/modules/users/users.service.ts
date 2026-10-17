@@ -3,9 +3,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DRIZZLE } from '../../database/database.module.js';
 import { users } from '../../database/schema.js';
 import type { Database } from '../../database/database.types.js';
-import { eq } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
+import { createPaginationMeta } from '../../common/utils/pagination.util.js';
+import { apiResponse } from '../../common/dto/api-response.dto.js';
 
 @Injectable()
 export class UsersService {
@@ -14,8 +17,18 @@ export class UsersService {
     private readonly db: Database,
   ) { }
 
-  async findAll() {
-    return this.db.select().from(users);
+  async findAll(query: PaginationQueryDto) {
+    const { page, limit, offset } = query;
+
+    const [data, totalResult] = await Promise.all([
+      this.db.select().from(users).limit(limit).offset(offset),
+      this.db.select({ count: count() }).from(users),
+    ]);
+
+    const totalItems = Number(totalResult[0]?.count ?? 0);
+    const meta = createPaginationMeta(page, limit, totalItems);
+
+    return apiResponse(data, 'Users retrieved successfully', meta);
   }
 
   async findById(id: string) {
