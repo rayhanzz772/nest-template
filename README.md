@@ -1,118 +1,236 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Template
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A production-ready NestJS boilerplate with PostgreSQL, Drizzle ORM, and a clean SOLID architecture.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## Tech Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Layer | Technology |
+|---|---|
+| Framework | [NestJS](https://nestjs.com/) v12 |
+| Language | TypeScript v6 |
+| Database | PostgreSQL |
+| ORM | [Drizzle ORM](https://orm.drizzle.team/) |
+| Validation | class-validator + class-transformer |
+| Password Hashing | argon2id |
+| Testing | Vitest + Supertest |
+| Linting | oxlint |
 
-## Project setup
+---
 
-```bash
-$ npm install
+## Project Structure
+
+```
+src/
+├── common/                        # Shared utilities, filters, interceptors
+│   ├── dto/
+│   │   ├── api-response.dto.ts    # Standard API response shape
+│   │   └── pagination-query.dto.ts # Pagination query params (page, limit)
+│   ├── filters/
+│   │   └── http-exception.filter.ts # Global error handler
+│   ├── interceptors/
+│   │   └── response.interceptor.ts  # Auto-wrap responses in ApiResponse shape
+│   └── utils/
+│       ├── date.util.ts
+│       └── pagination.util.ts
+│
+├── config/                        # Typed configuration via @nestjs/config
+│   ├── app.config.ts              # PORT, NODE_ENV, API_PREFIX, CORS_ORIGIN
+│   ├── database.config.ts         # DATABASE_URL, DB_HOST, DB_PORT, etc.
+│   ├── jwt.config.ts              # JWT_SECRET, JWT_EXPIRES_IN, etc.
+│   └── index.ts
+│
+├── database/                      # Database setup and schema
+│   ├── database.module.ts         # Provides DRIZZLE token via factory
+│   ├── database.types.ts          # Database type alias
+│   └── schema/
+│       ├── role.schema.ts         # roles table
+│       ├── user.schema.ts         # users table
+│       └── index.ts
+│
+├── modules/                       # Feature modules
+│   ├── auth/
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.module.ts
+│   └── users/
+│       ├── dto/
+│       │   ├── create-user.dto.ts
+│       │   └── update-user.dto.ts
+│       ├── users.controller.ts
+│       ├── users.service.ts
+│       ├── users.service.interface.ts  # IUsersService + USERS_SERVICE token
+│       └── users.module.ts
+│
+├── scripts/                       # Database seed scripts
+│   ├── seeds/
+│   │   ├── 01-roles.seed.ts
+│   │   ├── 02-users.seed.ts
+│   │   └── index.ts
+│   └── seed.ts
+│
+├── security/                      # Security utilities
+│   ├── password.service.ts        # argon2id hash & verify
+│   └── security.module.ts
+│
+├── app.module.ts                  # Root module
+└── main.ts                        # App bootstrap
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## Architecture
 
-# watch mode
-$ npm run start:dev
+This project follows **SOLID principles**:
 
-# production mode
-$ npm run start:prod
+- **S** — Each class has one responsibility (`PasswordService` hashes only, `UsersService` handles user data only).
+- **O** — Adding features means adding new modules, not modifying existing ones.
+- **L** — `UsersService` implements `IUsersService`, guaranteeing contract compliance.
+- **I** — `IUsersService` exposes only what the controller needs.
+- **D** — Controllers and services depend on **tokens/interfaces**, not concrete classes.
+
+```
+UsersController
+  └─ @Inject(USERS_SERVICE) → IUsersService
+                                  └─ UsersService (concrete, swappable)
+                                      └─ @Inject(DRIZZLE) → Database
 ```
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ npm run test
+## API Response Shape
 
-# e2e tests
-$ npm run test:e2e
+All responses are wrapped automatically by `ResponseInterceptor`.
 
-# test coverage
-$ npm run test:cov
+**Success:**
+```json
+{
+  "success": true,
+  "message": "Users retrieved successfully",
+  "data": [...],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "totalItems": 42,
+    "totalPages": 5
+  }
+}
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+**Error:**
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Validation failed",
+  "errors": ["name must be a string"],
+  "path": "/api/v1/users",
+  "timestamp": "2026-10-17T16:00:00.000Z"
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Observability
+## Database Schema
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+```
+roles
+├── id          text (CUID2, PK)
+├── name        varchar(100)
+├── code        varchar(255) UNIQUE
+├── description text
+└── created_at  timestamp
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+users
+├── id          text (CUID2, PK)
+├── role_id     text (FK → roles.id)
+├── name        varchar(100)
+├── email       varchar(255) UNIQUE
+├── password    varchar(255)
+├── created_at  timestamp
+├── updated_at  timestamp
+└── deleted_at  timestamp (soft delete)
+```
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+---
 
-This project is already instrumented. Create a free account at [observe.nestjs.com](https://observe.nestjs.com), add an application, and paste the generated app key and secret into the `ObserveModule.forRoot()` call in `src/app.module.ts`.
+## Environment Variables
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+Copy `.env.example` to `.env` and fill in the values.
 
-## Resources
+```env
+# App
+PORT=3000
+NODE_ENV=development
+API_PREFIX=api/v1
+CORS_ORIGIN=http://localhost:5173
 
-Check out a few resources that may come in handy when working with NestJS:
+# Database
+DATABASE_URL=postgresql://dev:postgres@localhost:5432/nest_template
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=dev
+DB_PASSWORD=postgres
+DB_NAME=nest_template
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# JWT
+JWT_SECRET=change_this_in_production
+JWT_EXPIRES_IN=1d
+JWT_REFRESH_SECRET=change_this_in_production
+JWT_REFRESH_EXPIRES_IN=7d
+```
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Getting Started
 
-## Stay in touch
+```bash
+# Install dependencies
+npm install
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Run database migrations
+npm run db:migrate
 
-## License
+# Seed database
+npm run db:seed
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# Start development server
+npm run dev
+```
+
+---
+
+## Available Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Start dev server with hot reload |
+| `npm run build` | Build for production |
+| `npm run start:prod` | Run production build |
+| `npm run test` | Run unit tests |
+| `npm run test:e2e` | Run end-to-end tests |
+| `npm run test:cov` | Run tests with coverage |
+| `npm run lint` | Lint source files |
+| `npm run db:generate` | Generate Drizzle migration files |
+| `npm run db:migrate` | Run migrations |
+| `npm run db:push` | Push schema directly to DB |
+| `npm run db:studio` | Open Drizzle Studio |
+| `npm run db:seed` | Seed the database |
+
+---
+
+## Adding a New Module
+
+1. Create `src/modules/<name>/` directory
+2. Define `<name>.service.interface.ts` with `I<Name>Service` and `<NAME>_SERVICE` token
+3. Implement `<name>.service.ts` with `implements I<Name>Service`
+4. Register token in `<name>.module.ts`:
+   ```ts
+   providers: [{ provide: NAME_SERVICE, useClass: NameService }]
+   ```
+5. Inject via token in `<name>.controller.ts`:
+   ```ts
+   @Inject(NAME_SERVICE) private readonly service: INameService
+   ```
+6. Import the module in `app.module.ts`
