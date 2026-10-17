@@ -1,12 +1,18 @@
 
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = app.get(ConfigService);
 
-  app.setGlobalPrefix('api/v1');
+  const apiPrefix = config.get<string>('app.apiPrefix', 'api/v1');
+  const port = config.get<number>('app.port', 3000);
+  const corsOrigin = config.get<string>('app.corsOrigin', 'http://localhost:5173');
+
+  app.setGlobalPrefix(apiPrefix);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -17,10 +23,10 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: ['http://localhost:5173'],
+    origin: [corsOrigin],
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(port);
 }
 
-bootstrap();
+void bootstrap();

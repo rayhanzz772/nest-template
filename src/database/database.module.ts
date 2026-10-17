@@ -1,8 +1,5 @@
 
-import {
-  Module,
-  OnApplicationShutdown,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -17,11 +14,11 @@ export const DRIZZLE = 'DRIZZLE';
       provide: DRIZZLE,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const pool = new Pool({
-          connectionString: config.getOrThrow<string>(
-            'DATABASE_URL',
-          ),
-        });
+        const connectionString =
+          config.get<string>('database.url') ||
+          config.getOrThrow<string>('DATABASE_URL');
+
+        const pool = new Pool({ connectionString });
 
         return drizzle({ client: pool, schema });
       },

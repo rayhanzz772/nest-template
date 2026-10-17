@@ -1,8 +1,8 @@
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DRIZZLE } from '../db/db.module.js';
-import { users } from '../db/schema.js';
-import type { Database } from '../db/db.types.js';
+import { DRIZZLE } from '../../database/database.module.js';
+import { users } from '../../database/schema.js';
+import type { Database } from '../../database/database.types.js';
 import { eq } from 'drizzle-orm';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
