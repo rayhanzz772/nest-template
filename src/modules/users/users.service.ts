@@ -11,12 +11,14 @@ import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
 import { createPaginationMeta } from '../../common/utils/pagination.util.js';
 import { apiResponse } from '../../common/dto/api-response.dto.js';
 import type { IUsersService } from './users.service.interface.js';
+import { PasswordService } from '../../security/password.service.js';
 
 @Injectable()
 export class UsersService implements IUsersService {
   constructor(
     @Inject(DRIZZLE)
     private readonly db: Database,
+    private readonly passwordService: PasswordService,
   ) { }
 
   async findAll(query: PaginationQueryDto) {
@@ -66,7 +68,16 @@ export class UsersService implements IUsersService {
   }
 
   async create(data: CreateUserDto) {
-    const result = await this.db.insert(users).values(data).returning();
+    const hashedPassword = await this.passwordService.hash(data.password);
+    const result = await this.db
+      .insert(users)
+      .values({
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+        roleId: data.roleId,
+      })
+      .returning();
     return result[0];
   }
 

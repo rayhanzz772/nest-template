@@ -12,7 +12,9 @@ interface SeedTask {
 
 const seedTasks: SeedTask[] = [
   { name: '01 - Roles', run: seed.seedRoles },
-  { name: '02 - Users', run: seed.seedUsers },
+  { name: '02 - Permissions', run: seed.seedPermissions },
+  { name: '03 - Role Permissions', run: seed.seedRolePermissions },
+  { name: '04 - Users', run: seed.seedUsers },
 ];
 
 async function runMasterSeed() {
