@@ -13,7 +13,7 @@ export function apiResponse<T, M = unknown>(
   return {
     success: true,
     message,
-    data,
     ...(meta !== undefined ? { meta } : {}),
+    data,
   };
 }

@@ -10,8 +10,4 @@ export class UpdateUserDto {
   @IsOptional()
   @MaxLength(255)
   email!: string;
-
-  @IsString()
-  @IsOptional()
-  bio?: string;
 }

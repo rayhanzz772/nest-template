@@ -8,6 +8,7 @@ import { AUTH_SERVICE } from './auth.service.interface.js';
 import { DatabaseModule } from '../../database/database.module.js';
 import { SecurityModule } from '../../security/security.module.js';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
+import { PermissionsGuard } from '../../common/guards/permissions.guard.js';
 
 @Module({
   imports: [
@@ -37,6 +38,10 @@ import { AuthGuard } from '../../common/guards/auth.guard.js';
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
   ],
   exports: [AUTH_SERVICE, JwtModule],

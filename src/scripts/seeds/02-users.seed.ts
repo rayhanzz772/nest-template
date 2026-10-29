@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 export async function seedUsers(db: Database): Promise<void> {
   console.log('  ⏳ Menanam data users...');
 
-  const password = await new PasswordService().hash('password123');
+  const password = await new PasswordService().hash('Password123!');
 
   const userRole = (await db.select({ id: roles.id }).from(roles).where(eq(roles.code, 'USER')).limit(1))[0];
   const adminRole = (await db.select({ id: roles.id }).from(roles).where(eq(roles.code, 'ADMIN')).limit(1))[0];
@@ -19,7 +19,7 @@ export async function seedUsers(db: Database): Promise<void> {
   const usersData: Array<typeof schema.users.$inferInsert> = [
     {
       name: 'Thag Caveman',
-      email: 'thag@cave.local',
+      email: 'admin@gmail.com',
       password: password,
       roleId: userRole.id,
     },

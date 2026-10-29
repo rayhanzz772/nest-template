@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Post, Body, Put, Delete, Query, Inject } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, Inject } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator.js';
 import { USERS_SERVICE } from './users.service.interface.js';
 import type { IUsersService } from './users.service.interface.js';
 
@@ -13,26 +14,31 @@ export class UsersController {
   ) { }
 
   @Get()
+  @RequirePermissions('users:read')
   findAll(@Query() query: PaginationQueryDto) {
     return this.usersService.findAll(query);
   }
 
-  @Get(':id/get')
+  @Get(':id')
+  @RequirePermissions('users:read')
   findById(@Param('id') id: string) {
     return this.usersService.findById(id);
   }
 
-  @Post('create')
+  @Post()
+  @RequirePermissions('users:create')
   create(@Body() body: CreateUserDto) {
     return this.usersService.create(body);
   }
 
-  @Put(':id/update')
+  @Patch(':id')
+  @RequirePermissions('users:update')
   update(@Param('id') id: string, @Body() body: UpdateUserDto) {
     return this.usersService.update(id, body);
   }
 
-  @Delete(':id/delete')
+  @Delete(':id')
+  @RequirePermissions('users:delete')
   delete(@Param('id') id: string) {
     return this.usersService.delete(id);
   }

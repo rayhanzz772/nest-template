@@ -5,18 +5,26 @@ import { rolePermissions } from '../../database/schema/role-permission.schema.js
 import { eq, inArray } from 'drizzle-orm';
 
 export async function seedRolePermissions(db: Database): Promise<void> {
-  console.log('  ⏳ Menanam data role_permissions...');
+  console.log('Seeding role permissions...');
 
-  const adminRole = (await db.select().from(roles).where(eq(roles.code, 'ADMIN')).limit(1))[0];
-  const userRole = (await db.select().from(roles).where(eq(roles.code, 'USER')).limit(1))[0];
+  const adminRole = (
+    await db.select().from(roles).where(eq(roles.code, 'ADMIN')).limit(1)
+  )[0];
+  const userRole = (
+    await db.select().from(roles).where(eq(roles.code, 'USER')).limit(1)
+  )[0];
 
   if (!adminRole || !userRole) {
-    throw new Error('Role ADMIN atau USER tidak ditemukan. Pastikan seeder roles sudah dijalankan.');
+    throw new Error(
+      'Role ADMIN atau USER tidak ditemukan. Pastikan seeder roles sudah dijalankan.',
+    );
   }
 
   const allPermissions = await db.select().from(permissions);
   if (allPermissions.length === 0) {
-    throw new Error('Permissions belum ditanam. Pastikan seeder permissions sudah dijalankan.');
+    throw new Error(
+      'Permissions belum ditanam. Pastikan seeder permissions sudah dijalankan.',
+    );
   }
 
   const rolePermissionsData: Array<typeof rolePermissions.$inferInsert> = [];
@@ -48,5 +56,7 @@ export async function seedRolePermissions(db: Database): Promise<void> {
     .values(rolePermissionsData)
     .onConflictDoNothing();
 
-  console.log(`  ✅ Role permissions selesai ditanam (${rolePermissionsData.length} records)!`);
+  console.log(
+    `  ✅ Role permissions selesai ditanam (${rolePermissionsData.length} records)!`,
+  );
 }

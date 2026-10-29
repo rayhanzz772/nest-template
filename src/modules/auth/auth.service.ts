@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module.js';
 import type { Database } from '../../database/database.types.js';
 import { users } from '../../database/schema/user.schema.js';
@@ -34,26 +34,21 @@ export class AuthService implements IAuthService {
     const existingUser = await this.db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, dto.email.toLowerCase()))
+      .where(and(eq(users.email, dto.email.toLowerCase()), isNull(users.deletedAt)))
       .limit(1);
 
     if (existingUser.length > 0) {
       throw new ConflictException('Email already registered');
     }
 
-    // Default to USER role
-    let defaultRole = (
+    const defaultRole = (
       await this.db.select().from(roles).where(eq(roles.code, 'USER')).limit(1)
     )[0];
 
     if (!defaultRole) {
-      // Fallback to any available role if USER not found
-      const availableRoles = await this.db.select().from(roles).limit(1);
-      defaultRole = availableRoles[0];
-    }
-
-    if (!defaultRole) {
-      throw new NotFoundException('No default role available in system');
+      throw new NotFoundException(
+        'Default role USER is not available in system',
+      );
     }
 
     const hashedPassword = await this.passwordService.hash(dto.password);
@@ -93,7 +88,9 @@ export class AuthService implements IAuthService {
       })
       .from(users)
       .leftJoin(roles, eq(users.roleId, roles.id))
-      .where(eq(users.email, dto.email.toLowerCase()))
+      .where(
+        and(eq(users.email, dto.email.toLowerCase()), isNull(users.deletedAt)),
+      )
       .limit(1);
 
     const user = matchedUsers[0];
@@ -112,7 +109,10 @@ export class AuthService implements IAuthService {
     }
 
     const jwtConfig = this.configService.get<JwtConfig>('jwt');
-    const secret = jwtConfig?.secret ?? process.env.JWT_SECRET ?? 'supersecretjwtkey_change_in_production';
+    const secret =
+      jwtConfig?.secret ??
+      process.env.JWT_SECRET ??
+      'supersecretjwtkey_change_in_production';
     const expiresIn = jwtConfig?.expiresIn ?? '1d';
     const refreshSecret =
       jwtConfig?.refreshSecret ??
@@ -165,7 +165,7 @@ export class AuthService implements IAuthService {
       })
       .from(users)
       .leftJoin(roles, eq(users.roleId, roles.id))
-      .where(eq(users.id, userId))
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
       .limit(1);
 
     const user = userResult[0];
@@ -182,7 +182,10 @@ export class AuthService implements IAuthService {
           code: permissions.code,
         })
         .from(rolePermissions)
-        .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+        .innerJoin(
+          permissions,
+          eq(rolePermissions.permissionId, permissions.id),
+        )
         .where(eq(rolePermissions.roleId, user.role.id));
 
       userPermissions = perms;
